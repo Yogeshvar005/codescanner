@@ -2,7 +2,7 @@ import streamlit as st
 import pickle
 from pathlib import Path
 from argon2 import PasswordHasher
-from pyzbar import pyzbar
+from pyzbar.pyzbar import pyzbar
 
 def add_custom_css():
     st.markdown("""
