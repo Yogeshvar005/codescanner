@@ -3,7 +3,7 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
-from pyzbar import pyzbar
+from pyzbar.pyzbar import pyzbar
 import webbrowser
 import winsound
 from datetime import datetime
