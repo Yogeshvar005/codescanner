@@ -1,7 +1,7 @@
 import streamlit as st
 import pickle
 from pathlib import Path
-import PasswordHasher
+from argon2 import PasswordHasher
 from pyzbar import pyzbar
 
 def add_custom_css():
@@ -45,7 +45,6 @@ def add_custom_css():
     .stButton > button:hover {
         background-color: #45a049;
     }
-    .import streamlit as st
 
     <style>
 
