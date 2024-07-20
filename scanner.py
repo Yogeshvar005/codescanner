@@ -3,7 +3,7 @@ import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
-from pyzbar.pyzbar import pyzbar
+from pyzbar import pyzbar
 import webbrowser
 from datetime import datetime
 import time
