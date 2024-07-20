@@ -60,12 +60,13 @@ def new_page():
                 st.warning("Please enter text to generate Barcode")
 
 def beep():
+    # Replace winsound with a Streamlit alternative
     st.audio(data=b'\x00\x00' + b'\xff\x7f' * 44100, sample_rate=44100)
 
 def main_page():
     st.sidebar.title("Navigation")
     st.sidebar.image("https://cdn-icons-png.flaticon.com/512/4481/4481064.png", use_column_width=True)
-    option = st.sidebar.selectbox("Select an option", ["Home", "Upload Image", "Barcode", "QR Code", "Next"])
+    option = st.sidebar.selectbox("Select an option", ["Home", "Upload Image", "Barcode", "QR Code", "Generator"])
 
     if option == "Home":
         st.title("Welcome to CodeScanner")
@@ -93,9 +94,9 @@ def main_page():
                     data = obj.data.decode('utf-8')
                     if st.button(f"Open in {open_in}", key=data):
                         if open_in == "Google":
-                            webbrowser.open(f"https://www.google.com/search?q={data}")
+                            st.markdown(f"[Open in Google](https://www.google.com/search?q={data})")
                         elif open_in == "Amazon":
-                            webbrowser.open(f"https://www.amazon.com/s?k={data}")
+                            st.markdown(f"[Open in Amazon](https://www.amazon.com/s?k={data})")
             else:
                 st.warning("No codes detected in the image.")
 
@@ -121,7 +122,7 @@ def main_page():
             st.session_state.camera_active = True
             run_camera("qrcode", open_in, display_datetime)
 
-    elif option == "Next":
+    elif option == "Generator":
         new_page()
 
 def run_camera(code_type, open_in, display_datetime):
@@ -138,7 +139,7 @@ def run_camera(code_type, open_in, display_datetime):
             st.error("Failed to capture image")
             break
         
-        decoded_objects = pyzbar.decode(frame)
+        decoded_objects = decode(frame)
         for obj in decoded_objects:
             detected_code = obj.data.decode('utf-8')
             st.success(f"{code_type.capitalize()} detected: {detected_code}")
@@ -147,9 +148,9 @@ def run_camera(code_type, open_in, display_datetime):
                 st.info(f"Detected at: {current_datetime}")
             beep()
             if open_in == "Google":
-                webbrowser.open(f"https://www.google.com/search?q={detected_code}")
+                st.markdown(f"[Open in Google](https://www.google.com/search?q={detected_code})")
             elif open_in == "Amazon":
-                webbrowser.open(f"https://www.amazon.com/s?k={detected_code}")
+                st.markdown(f"[Open in Amazon](https://www.amazon.com/s?k={detected_code})")
             st.session_state.camera_active = False
             break
         
@@ -171,54 +172,5 @@ def run_camera(code_type, open_in, display_datetime):
     status_text.empty()
 
 def scan_image_for_codes(image):
-    decoded_objects = pyzbar.decode(image)
+    decoded_objects = decode(image)
     return decoded_objects
-
-def generator_page():
-    st.title("QR Code and Barcode Generator")
-
-    option = st.selectbox("Select Code Type", ["QR Code", "Barcode"])
-
-    if option == "QR Code":
-        text = st.text_input("Enter text for QR Code")
-        if st.button("Generate QR Code"):
-            if text:
-                qr = qrcode.QRCode(
-                    version=1,
-                    error_correction=qrcode.constants.ERROR_CORRECT_L,
-                    box_size=10,
-                    border=4,
-                )
-                qr.add_data(text)
-                qr.make(fit=True)
-                img = qr.make_image(fill_color="black", back_color="white")
-                buf = io.BytesIO()
-                img.save(buf, format='PNG')
-                byte_im = buf.getvalue()
-                st.image(byte_im, caption="Generated QR Code")
-                st.download_button(
-                    label="Download QR Code",
-                    data=byte_im,
-                    file_name="qrcode.png",
-                    mime="image/png"
-                )
-            else:
-                st.warning("Please enter text to generate QR Code")
-
-    elif option == "Barcode":
-        text = st.text_input("Enter text for Barcode")
-        if st.button("Generate Barcode"):
-            if text:
-                barcode = Code128(text, writer=ImageWriter())
-                buf = BytesIO()
-                barcode.write(buf)
-                byte_im = buf.getvalue()
-                st.image(byte_im, caption="Generated Barcode")
-                st.download_button(
-                    label="Download Barcode",
-                    data=byte_im,
-                    file_name="barcode.png",
-                    mime="image/png"
-                )
-            else:
-                st.warning("Please enter text to generate Barcode")
