@@ -166,7 +166,6 @@ def run_camera(code_type, open_in, display_datetime):
             break
     
     cap.release()
-    cv2.destroyAllWindows()
     stframe.empty()
     progress_bar.empty()
     status_text.empty()
