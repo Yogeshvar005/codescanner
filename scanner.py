@@ -61,7 +61,7 @@ def new_page():
                 st.warning("Please enter text to generate Barcode")
 
 def beep():
-    winsound.Beep(2500, 500)
+    st.audio(data=b'\x00\x00' + b'\xff\x7f' * 44100, sample_rate=44100)
 
 def main_page():
     st.sidebar.title("Navigation")
