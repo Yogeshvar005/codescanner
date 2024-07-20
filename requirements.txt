@@ -6,3 +6,4 @@ pyzbar
 qrcode
 python-barcode
 argon2-cffi
+zbar-py
