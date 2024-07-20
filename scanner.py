@@ -12,6 +12,18 @@ from barcode import Code128
 from barcode.writer import ImageWriter
 from io import BytesIO
 
+def get_valid_camera_index():
+    """
+    Tries to find a valid camera index by attempting to open up to 10 camera indices.
+    Returns the first valid camera index found, or None if no valid camera is found.
+    """
+    for i in range(10):  # Try up to 10 camera indices
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            cap.release()  # Release the camera resource
+            return i
+    return None
+
 def new_page():
     st.title("QR Code and Barcode Generator")
     option = st.selectbox("Select Code Type", ["QR Code", "Barcode"])
@@ -124,80 +136,64 @@ def main_page():
 
     elif option == "Generator":
         new_page()
-        
-def get_valid_camera_index():
-     for i in range(10):  # Try up to 10 camera indices
-        cap = cv2.VideoCapture(i)
-        if cap.isOpened():
-            cap.release()  # Release the camera resource
-            return i
-    return None
-def main():
-    camera_index = get_valid_camera_index()
 
+def run_camera(code_type, open_in, display_datetime):
+    camera_index = get_valid_camera_index()
     if camera_index is not None:
         cap = cv2.VideoCapture(camera_index)
-        st.write(f"Using camera index: {camera_index}")
-        while True:
+        stframe = st.empty()
+        stop_button = st.button("Stop Scanner")
+        
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+
+        while st.session_state.camera_active:
             ret, frame = cap.read()
             if not ret:
                 st.error("Failed to capture image")
                 break
-
-            st.image(frame, channels="BGR")
-
-            if st.button("Stop"):
+            
+            decoded_objects = decode(frame)
+            for obj in decoded_objects:
+                detected_code = obj.data.decode('utf-8')
+                st.success(f"{code_type.capitalize()} detected: {detected_code}")
+                if display_datetime:
+                    current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    st.info(f"Detected at: {current_datetime}")
+                beep()
+                if open_in == "Google":
+                    st.markdown(f"[Open in Google](https://www.google.com/search?q={detected_code})")
+                elif open_in == "Amazon":
+                    st.markdown(f"[Open in Amazon](https://www.amazon.com/s?k={detected_code})")
+                st.session_state.camera_active = False
                 break
-
+            
+            # Add a scanning effect
+            for i in range(100):
+                progress_bar.progress(i + 1)
+                status_text.text(f"Scanning... {i+1}%")
+                time.sleep(0.01)
+            
+            stframe.image(frame, channels="BGR", use_column_width=True)
+            if stop_button:
+                st.session_state.camera_active = False
+                break
+        
         cap.release()
+        stframe.empty()
+        progress_bar.empty()
+        status_text.empty()
     else:
         st.error("No valid camera found")
-
-
-def run_camera(code_type, open_in, display_datetime):
-    stframe = st.empty()
-    stop_button = st.button("Stop Scanner")
-    
-    progress_bar = st.progress(0)
-    status_text = st.empty()
-
-    while st.session_state.camera_active:
-        ret, frame = cap.read()
-        if not ret:
-            st.error("Failed to capture image")
-            break
-        
-        decoded_objects = decode(frame)
-        for obj in decoded_objects:
-            detected_code = obj.data.decode('utf-8')
-            st.success(f"{code_type.capitalize()} detected: {detected_code}")
-            if display_datetime:
-                current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                st.info(f"Detected at: {current_datetime}")
-            beep()
-            if open_in == "Google":
-                st.markdown(f"[Open in Google](https://www.google.com/search?q={detected_code})")
-            elif open_in == "Amazon":
-                st.markdown(f"[Open in Amazon](https://www.amazon.com/s?k={detected_code})")
-            st.session_state.camera_active = False
-            break
-        
-        # Add a scanning effect
-        for i in range(100):
-            progress_bar.progress(i + 1)
-            status_text.text(f"Scanning... {i+1}%")
-            time.sleep(0.01)
-        
-        stframe.image(frame, channels="BGR", use_column_width=True)
-        if stop_button:
-            st.session_state.camera_active = False
-            break
-    
-    cap.release()
-    stframe.empty()
-    progress_bar.empty()
-    status_text.empty()
 
 def scan_image_for_codes(image):
     decoded_objects = decode(image)
     return decoded_objects
+
+def main():
+    if 'camera_active' not in st.session_state:
+        st.session_state.camera_active = False
+    main_page()
+
+if __name__ == "__main__":
+    main()
