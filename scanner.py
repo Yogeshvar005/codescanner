@@ -124,9 +124,37 @@ def main_page():
 
     elif option == "Generator":
         new_page()
+        
+def get_valid_camera_index():
+     for i in range(10):  # Try up to 10 camera indices
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            cap.release()  # Release the camera resource
+            return i
+    return None
+def main():
+    camera_index = get_valid_camera_index()
+
+    if camera_index is not None:
+        cap = cv2.VideoCapture(camera_index)
+        st.write(f"Using camera index: {camera_index}")
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                st.error("Failed to capture image")
+                break
+
+            st.image(frame, channels="BGR")
+
+            if st.button("Stop"):
+                break
+
+        cap.release()
+    else:
+        st.error("No valid camera found")
+
 
 def run_camera(code_type, open_in, display_datetime):
-    cap = cv2.VideoCapture(10)
     stframe = st.empty()
     stop_button = st.button("Stop Scanner")
     
