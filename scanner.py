@@ -126,7 +126,7 @@ def main_page():
         new_page()
 
 def run_camera(code_type, open_in, display_datetime):
-    cap = cv2.VideoCapture()
+    cap = cv2.VideoCapture(1)
     stframe = st.empty()
     stop_button = st.button("Stop Scanner")
     
