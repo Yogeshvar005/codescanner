@@ -11,16 +11,13 @@ import qrcode
 from barcode import Code128
 from barcode.writer import ImageWriter
 from io import BytesIO
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase, WebRtcMode
 
 def get_valid_camera_index():
-    """
-    Tries to find a valid camera index by attempting to open up to 10 camera indices.
-    Returns the first valid camera index found, or None if no valid camera is found.
-    """
-    for i in range(10):  # Try up to 10 camera indices
+    for i in range(10):
         cap = cv2.VideoCapture(i)
         if cap.isOpened():
-            cap.release()  # Release the camera resource
+            cap.release()
             return i
     return None
 
@@ -72,7 +69,6 @@ def new_page():
                 st.warning("Please enter text to generate Barcode")
 
 def beep():
-    # Replace winsound with a Streamlit alternative
     st.audio(data=b'\x00\x00' + b'\xff\x7f' * 44100, sample_rate=44100)
 
 def main_page():
@@ -96,7 +92,7 @@ def main_page():
             image_np = np.array(image)
             st.image(image, caption='Uploaded Image.', use_column_width=True)
             with st.spinner("Scanning for codes..."):
-                time.sleep(2)  # Simulating processing time
+                time.sleep(2)
                 decoded_objects = scan_image_for_codes(image_np)
             
             if decoded_objects:
@@ -137,63 +133,38 @@ def main_page():
     elif option == "Generator":
         new_page()
 
-def run_camera(code_type, open_in, display_datetime):
-    camera_index = get_valid_camera_index()
-    if camera_index is not None:
-        cap = cv2.VideoCapture(camera_index)
-        stframe = st.empty()
-        stop_button = st.button("Stop Scanner")
-        
-        progress_bar = st.progress(0)
-        status_text = st.empty()
+class VideoTransformer(VideoTransformerBase):
+    def __init__(self, code_type, open_in, display_datetime):
+        self.code_type = code_type
+        self.open_in = open_in
+        self.display_datetime = display_datetime
 
-        while st.session_state.camera_active:
-            ret, frame = cap.read()
-            if not ret:
-                st.error("Failed to capture image")
-                break
-            
-            decoded_objects = decode(frame)
-            for obj in decoded_objects:
-                detected_code = obj.data.decode('utf-8')
-                st.success(f"{code_type.capitalize()} detected: {detected_code}")
-                if display_datetime:
-                    current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    st.info(f"Detected at: {current_datetime}")
-                beep()
-                if open_in == "Google":
-                    st.markdown(f"[Open in Google](https://www.google.com/search?q={detected_code})")
-                elif open_in == "Amazon":
-                    st.markdown(f"[Open in Amazon](https://www.amazon.com/s?k={detected_code})")
-                st.session_state.camera_active = False
-                break
-            
-            # Add a scanning effect
-            for i in range(100):
-                progress_bar.progress(i + 1)
-                status_text.text(f"Scanning... {i+1}%")
-                time.sleep(0.01)
-            
-            stframe.image(frame, channels="BGR", use_column_width=True)
-            if stop_button:
-                st.session_state.camera_active = False
-                break
-        
-        cap.release()
-        stframe.empty()
-        progress_bar.empty()
-        status_text.empty()
-    else:
-        st.error("No valid camera found")
+    def transform(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        decoded_objects = decode(img)
+        for obj in decoded_objects:
+            detected_code = obj.data.decode('utf-8')
+            st.success(f"{self.code_type.capitalize()} detected: {detected_code}")
+            if self.display_datetime:
+                current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                st.info(f"Detected at: {current_datetime}")
+            beep()
+            if self.open_in == "Google":
+                st.markdown(f"[Open in Google](https://www.google.com/search?q={detected_code})")
+            elif self.open_in == "Amazon":
+                st.markdown(f"[Open in Amazon](https://www.amazon.com/s?k={detected_code})")
+            st.session_state.camera_active = False
+            break
+        return img
+
+def run_camera(code_type, open_in, display_datetime):
+    webrtc_streamer(
+        key="example",
+        mode=WebRtcMode.SENDRECV,
+        video_transformer_factory=lambda: VideoTransformer(code_type, open_in, display_datetime),
+        media_stream_constraints={"video": True, "audio": False},
+    )
 
 def scan_image_for_codes(image):
     decoded_objects = decode(image)
     return decoded_objects
-
-def main():
-    if 'camera_active' not in st.session_state:
-        st.session_state.camera_active = False
-    main_page()
-
-if __name__ == "__main__":
-    main()
