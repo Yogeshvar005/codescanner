@@ -7,3 +7,4 @@ Pillow
 pyzbar
 qrcode
 python-barcode
+streamlit-webrtc
