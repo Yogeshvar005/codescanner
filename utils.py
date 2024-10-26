@@ -2,68 +2,33 @@ import streamlit as st
 import pickle
 from pathlib import Path
 from argon2 import PasswordHasher
-from pyzbar.pyzbar import decode
+from pyzbar import pyzbar
 
 def add_custom_css():
-    st.markdown("""
-    <style>
-    
-    .big-font {
-        font-size: 24px;
-        font-weight: bold;
-        color: #4A4A4A;
-    }
-    .animated-text {
-        font-size: 20px;
-        font-weight: bold;
-        background: linear-gradient(45deg, #ff00ff, #00ffff, #ff00ff);
-        background-size: 200% 200%;
-        color: white;
-        padding: 10px;
-        border-radius: 5px;
-        animation: gradient 5s ease infinite;
-    }
-    @keyframes gradient {
-        0% {background-position: 0% 50%;}
-        50% {background-position: 100% 50%;}
-        100% {background-position: 0% 50%;}
-    }
-    .stButton > button {
-        color: #ffffff;
-        background-color: #4CAF50;
-        border: none;
-        padding: 15px 32px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: 4px 2px;
-        transition-duration: 0.4s;
-        cursor: pointer;
-        border-radius: 12px;
-    }
-    .stButton > button:hover {
-        background-color: #45a049;
-    }
-
-    <style>
-
-    .custom-radio {
-        background-color: #f0f8ff;  /* Light blue background */
-        padding: 10px;
-        border-radius: 10px;
-        border: 2px solid #4CAF50;  /* Green border */
-        margin-bottom: 10px;
-    }
-    .custom-radio .st-bc {
-        background-color: transparent;
-    }
-    .custom-radio .st-bx {
-        color: #4CAF50;  /* Green text */
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 def save_hashed_passwords(passwords):
     ph = PasswordHasher()
